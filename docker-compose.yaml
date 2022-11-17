@@ -1,0 +1,42 @@
+version: "3"
+
+services:
+  spring-cloud-user-service:
+    image: abduraufabdusattorov/user_service:1.0.0 #user_service
+
+    networks:
+      - common-network
+    ports:
+      - 8090:9000
+    depends_on:
+      - user-database
+
+  user-database:
+    image: mysql:5
+    networks:
+      - common-network
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=user_db
+
+  spring-cloud-post-service:
+    image: abduraufabdusattorov/post_service:1.0.0 # post_service
+#
+    networks:
+      - common-network
+    ports:
+      - 8091:8080
+    depends_on:
+      - post-database
+
+  post-database:
+      image: mysql:5
+      networks:
+        - common-network
+      environment:
+        - MYSQL_ROOT_PASSWORD=password
+        - MYSQL_DATABASE=post_db
+
+networks:
+  common-network:
+
