@@ -1,0 +1,170 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: k8s-program
+  labels:
+    name: k8s-program
+
+---
+
+# # pods 
+
+# Pod for User service
+apiVersion: v1
+kind: Pod
+metadata:
+  name: user-service-p
+  namespace: k8s-program
+  labels:
+    service: user-service
+spec: 
+  containers: 
+    - name: user-service
+      image: abduraufabdusattorov/user_service:1.0.0
+      env: 
+        - name: DB_HOST
+          value: user-db-s
+        - name: DB_USERNAME
+          value: root
+        - name: DB_PASSWORD
+          value: password
+---
+
+# Pod for Post Service 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: post-service-p
+  namespace: k8s-program
+  labels:
+    service: post-service
+spec: 
+  containers: 
+    - name: post-service
+      image: abduraufabdusattorov/post_service:1.0.0
+      env: 
+        - name: DB_HOST
+          value: post-db-s
+        - name: DB_USERNAME
+          value: root
+        - name: DB_PASSWORD
+          value: password
+        - name: USER-SERVICE
+          value: user-service-s:9000
+---
+
+#Pod for User db
+apiVersion: v1
+kind: Pod
+metadata:
+  name: user-db-p
+  namespace: k8s-program
+  labels:
+    db: user-db
+spec: 
+  containers: 
+    - name: user-db
+      image: mysql:5
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: MYSQL_DATABASE
+          value: user_db
+--- 
+
+#Pod for Post db
+apiVersion: v1
+kind: Pod
+metadata:
+  name: post-db-p
+  namespace: k8s-program
+  labels:
+    db: post-db
+spec: 
+  containers: 
+    - name: post-db
+      image: mysql:5
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        - name: MYSQL_DATABASE
+          value: post_db
+
+---
+
+# Services for All Pods which were written above
+
+# Service for User service
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service-s
+  namespace: k8s-program
+spec:
+  selector:
+    service: user-service # selecting user-service-pod
+  ports:
+    - name: http
+      port: 9000
+      nodePort: 30092
+  type: NodePort
+
+---
+
+  # Service for Post service
+apiVersion: v1
+kind: Service
+metadata:
+  name: post-service-s
+  namespace: k8s-program
+spec:
+  selector:
+    service: post-service # selecting post-service-pod
+  ports:
+    - name: http
+      port: 8080
+      nodePort: 30091
+  type: NodePort
+
+---
+
+  # Service for User database
+  kind: Service
+  apiVersion: v1
+  metadata:
+    name: user-db-s
+    namespace: k8s-program
+  spec:
+    selector:
+      db: user-db
+    ports: 
+      - port: 3306
+    type: ClusterIP
+
+---
+
+# Service for Post database
+  kind: Service
+  apiVersion: v1
+  metadata:
+    name: post-db-s
+    namespace: k8s-program
+  spec:
+    selector:
+      db: post-db
+    ports: 
+      - port: 3306
+    type: ClusterIP
+
+
+
+---
+
+kind: Deployment
+metadata: 
+  name: user-app
+  namespace: k8s-program
+spec:
+  selector:
+    matchLabels:
